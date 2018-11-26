@@ -2,7 +2,8 @@ import numpy as np
 from numpy.random import dirichlet as dir
 from scipy.stats import binom
 import random
-from scipy.special import digamma, gammaln, betaln
+from scipy.special import digamma, gammaln, betaln, beta
+from scipy.misc import comb
 import math
 import matplotlib.pyplot as plt
 
@@ -205,26 +206,54 @@ def vi():
 
 
 def gibbs():
-    #uniformly randomly initialize 30 clusters, index 0-29
-    # half-open interval [low,high)
-    clusters_assignment = np.random.randint(low=0, high=30, size=n)
-    num_clusters = np.amax(clusters_assignment) + 1 # 0-based cluster index
-    theta = np.random.beta(0.5, 0.5, size=num_clusters)
-
-
     alpha0 = 0.75
     a0 = 0.5
     b0 = 0.5
 
+    # initialize each c_i
+    # uniformly randomly initialize 30 clusters, index 0-29
+    # half-open interval [low,high)
+    clusters_assignment = np.random.randint(low=0, high=30, size=n)
+    num_clusters = np.amax(clusters_assignment) + 1 # 0-based cluster index
+    theta = np.random.beta(a0, b0, size=num_clusters)
+
+    # a list of n_j
     each_cluster_size = np.asarray(
         [np.sum(clusters_assignment==idx) for idx in range(num_clusters)])
-    # step 1
-    for idx, x_i in enumerate(X):
-        phi_i = np.zeros(num_clusters)
 
-        # for all j s.t. n_j^(-1) > 0
+    # step 1
+    for idx, x_i in enumerate(X[:2]):
+        # the last index is for new value of j'
+        phi_i = np.zeros(num_clusters+1)
+
+        # step 1.a) for all j s.t. n_j^(-1) > 0
         for j in range(num_clusters):
-            phi_i[j] = binom.pmf(x_i,20,theta[j]) * each_cluster_size[j] / (alpha0 + n - 1)
+            phi_i[j] = binom.pmf(x_i,20,theta[j]) * each_cluster_size[j] \
+                       / (alpha0 + n - 1)
+
+        # step 1.b) for a new value j'
+        phi_i[num_clusters] = comb(20,x_i) * \
+                              (math.exp(betaln(a0+x_i,b0+20-x_i) - betaln(a0,b0)) *
+                               (alpha0/(alpha0+n-1)))
+        phi_i = phi_i / np.sum(phi_i)
+
+        # step 1.c) ssample c_i from a discrete distribution
+        c_i = np.random.choice(range(num_clusters+1),p=phi_i)
+        old_c_i = clusters_assignment[idx]
+        clusters_assignment[idx] = c_i
+
+        # step 1.d) generate a new theta_j' if c_i creates a new cluster
+        if c_i == num_clusters:
+            theta = np.append(theta,np.random.beta(a0, b0, size=1))
+
+        # keep n_j up-to-date
+        each_cluster_size[old_c_i] -= 1
+        if c_i == num_clusters:
+            each_cluster_size = each_cluster_size.append(each_cluster_size, 1)
+        else:
+            each_cluster_size[c_i] += 1
+
+
 
 
 gibbs()
