@@ -209,6 +209,8 @@ def gibbs():
     # half-open interval [low,high)
     clusters_assignment = np.random.randint(low=0, high=30, size=n)
     num_clusters = np.amax(clusters_assignment) + 1 # 0-based cluster index
+    theta = np.random.beta(0.5, 0.5, size=num_clusters)
+
 
     alpha0 = 0.75
     a0 = 0.5
@@ -216,10 +218,13 @@ def gibbs():
 
     each_cluster_size = np.asarray(
         [np.sum(clusters_assignment==idx) for idx in range(num_clusters)])
+    # step 1
     for idx, x_i in enumerate(X):
         phi_i = np.zeros(num_clusters)
+
+        # for all j s.t. n_j^(-1) > 0
         for j in range(num_clusters):
-            phi_i[j] = binom.pmf(x_i,20,theta)
+            phi_i[j] = binom.pmf(x_i,20,theta[j]) * each_cluster_size[j] / (alpha0 + n - 1)
 
 
 gibbs()
