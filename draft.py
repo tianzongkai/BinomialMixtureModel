@@ -253,6 +253,19 @@ def gibbs():
         else:
             each_cluster_size[c_i] += 1
 
+        # re-index clusters
+        idx_change = 0
+        each_cluster_size_new = []
+        for idx, size in enumerate(each_cluster_size):
+            if size == 0:
+                idx_change += 1
+            elif idx_change > 0:
+                clusters_assignment[clusters_assignment == idx] -= idx_change
+
+            if size != 0:
+                each_cluster_size_new.append(size)
+        num_clusters = len(each_cluster_size_new)
+        each_cluster_size = np.asarray(each_cluster_size_new)
 
 
 
