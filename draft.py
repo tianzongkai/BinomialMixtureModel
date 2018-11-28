@@ -211,7 +211,7 @@ def gibbs():
     alpha0 = 0.75
     a0 = 0.5
     b0 = 0.5
-    T = 10
+    T = 1000
     # initialize each c_i
     # uniformly randomly initialize 30 clusters, index 0-29
     # half-open interval [low,high)
@@ -221,14 +221,14 @@ def gibbs():
 
     # a list of n_j
     each_cluster_size = np.asarray(
-        [np.sum(clusters_assignment==idx) for idx in range(num_clusters)])
+        [np.sum(clusters_assignment==cluster_idx) for cluster_idx in range(num_clusters)])
     num_clusters_list = [num_clusters]
     six_largest_clusters_size = []
 
     for t in range(T):
         if t%10 == 0: print "t =",t
         # step 1
-        for idx, x_i in enumerate(X):
+        for cluster_idx, x_i in enumerate(X):
             # the last index is for new value of j'
             phi_i = np.zeros(num_clusters+1)
 
@@ -243,10 +243,10 @@ def gibbs():
                                    (alpha0/(alpha0+n-1)))
             phi_i = phi_i / np.sum(phi_i)
 
-            # step 1.c) ssample c_i from a discrete distribution
+            # step 1.c) sample c_i from a discrete distribution
             c_i = np.random.choice(range(num_clusters+1),p=phi_i)
-            old_c_i = clusters_assignment[idx]
-            clusters_assignment[idx] = c_i
+            old_c_i = clusters_assignment[cluster_idx]
+            clusters_assignment[cluster_idx] = c_i
 
             # step 1.d) generate a new theta_j' if c_i creates a new cluster
             if c_i == num_clusters:
@@ -261,13 +261,13 @@ def gibbs():
                 each_cluster_size[c_i] += 1
 
         # re-index clusters
-        idx_change = 0
+        cluster_idx_change = 0
         each_cluster_size_new = []
-        for idx, size in enumerate(each_cluster_size):
+        for cluster_idx, size in enumerate(each_cluster_size):
             if size == 0:
-                idx_change += 1
-            elif idx_change > 0:
-                clusters_assignment[clusters_assignment == idx] -= idx_change
+                cluster_idx_change += 1
+            elif cluster_idx_change > 0:
+                clusters_assignment[clusters_assignment == cluster_idx] -= cluster_idx_change
 
             if size != 0:
                 each_cluster_size_new.append(size)
@@ -276,7 +276,7 @@ def gibbs():
         each_cluster_size = np.asarray(each_cluster_size_new)
 
         # print num_clusters
-        print each_cluster_size
+        # print each_cluster_size
 
         # step 2.
         theta = []
@@ -294,7 +294,7 @@ def gibbs():
     six_largest_clusters_size = np.asarray(six_largest_clusters_size) # shape (T,6)
     # print six_largest_clusters_size.shape
 
-    plt.figure(1)
+    plt.figure(figsize=(12, 6))
     for j in range(6):
         plt.plot(range(T), six_largest_clusters_size[:,j], label=("cluster %d"%j))
     plt.title("6 most probable clusters")
@@ -302,8 +302,8 @@ def gibbs():
     plt.ylabel("size of clusters")
     plt.savefig("gibbs_part_b.png")
 
-    plt.figure(2)
-    plt.plot(range(T+1),num_clusters_list, '-o')
+    plt.figure(figsize=(12, 6))
+    plt.plot(range(T+1),num_clusters_list)
     plt.xlabel("T")
     plt.yticks(range(np.amin(num_clusters_list), np.amax(num_clusters_list)+1))
     plt.title("number of clusters")
