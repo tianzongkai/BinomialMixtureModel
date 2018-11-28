@@ -112,9 +112,9 @@ def vi():
         phi = np.random.dirichlet(alpha0, n)
         # print phi[5]
 
-        dir_sampling = np.random.dirichlet(alpha0, 1)
-        for x_i in range(21):
-            phi[X==x_i] = np.random.dirichlet(alpha0, 1)
+        # dir_sampling = np.random.dirichlet(alpha0, 1)
+        # for x_i in range(21):
+        #     phi[X==x_i] = np.random.dirichlet(alpha0, 1)
 
         L_list = []
         for t in range(T):
@@ -226,7 +226,7 @@ def gibbs():
     six_largest_clusters_size = []
 
     for t in range(T):
-        if t%10 == 0: print "t =",t
+        if t%100 == 0: print "t =",t
         # step 1
         for cluster_idx, x_i in enumerate(X):
             # the last index is for new value of j'
